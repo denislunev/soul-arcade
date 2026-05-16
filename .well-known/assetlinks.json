@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.github.denislunev.soularcade",
+      "sha256_cert_fingerprints": [
+        "0F:34:6A:30:55:03:FB:65:EE:AF:22:10:0C:21:DC:7D:51:75:0C:18:14:11:62:DD:0E:74:2E"
+      ]
+    }
+  }
+]
