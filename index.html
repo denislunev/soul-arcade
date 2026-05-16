@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>SOUL ARCADE 👾</title>
+
+<!-- Open Graph for chat previews -->
+<meta property="og:title" content="SOUL ARCADE 👾">
+<meta property="og:description" content="Type a name — uncover the vibe. Pure math, no mysticism.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://friendscanner.fun/">
+<meta property="og:image" content="https://friendscanner.fun/og-cover.jpg">
+<meta name="twitter:card" content="summary_large_image">
+
+<!-- PWA / mobile shell -->
+<meta name="theme-color" content="#000000">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<!-- Distinctive arcade font -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=block" rel="stylesheet">
+
+<style>
+:root {
+    --yellow: #ffd900; --blue: #00d9ff; --red: #ff4336; --green: #00ff95; --black: #000;
+    --bg-grey: #0b0b0b; --gold: linear-gradient(45deg, #bf953f, #fcf6ba, #b38728, #fbf5b7, #aa771c);
+    --aura-color: rgba(255, 255, 255, 0.4);
+    --font-arcade: 'Bebas Neue', Impact, 'Arial Narrow Bold', sans-serif;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+body {
+    margin: 0; background: var(--black);
+    height: 100vh; height: 100dvh;
+    overflow: hidden;
+    display: flex; justify-content: center; align-items: center;
+    font-family: var(--font-arcade); color: white;
+    transition: background 0.4s ease;
+    user-select: none; -webkit-user-select: none;
+    overscroll-behavior: none;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+input { user-select: text; -webkit-user-select: text; }
+
+/* ====== STATE BACKGROUNDS ====== */
+body.is-scanning { background: #050a10; }
+body.is-scanning .app { animation: pulse-border 1.5s infinite ease-in-out; }
+body.is-npc { background: #050505; }
+body.is-glitched { background: #10000a; }
+body.is-godlike { background: #08001a; }
+body.is-epic { background: #1a1500; }
+
+.app-container { position: relative; width: 92%; max-width: 420px; height: 94vh; height: 94dvh; border-radius: 26px; overflow: hidden; }
+.crt-lines { position: absolute; inset: 0; background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255,0,0,0.02), rgba(0,255,0,0.01), rgba(0,0,255,0.02)); background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 20; }
+.vignette { position: absolute; inset: 0; background: radial-gradient(circle, transparent 40%, rgba(0,0,0,0.7) 100%); pointer-events: none; z-index: 21; }
+
+.app {
+    position: relative; width: 100%; height: 100%; border: 4px solid var(--yellow); border-radius: 26px;
+    background: var(--bg-grey); padding: 20px 20px 28px; display: flex; flex-direction: column;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s ease;
+}
+
+.app.shake { animation: app-shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+/* ====== TIER-SPECIFIC BORDERS ====== */
+body.is-glitched .app { animation: pulse-glitch 0.35s infinite; border-color: #ff0044; }
+body.is-godlike .app { animation: rainbow-border 2.2s linear infinite; }
+body.is-epic .app { border-color: #ffd700; box-shadow: 0 0 25px rgba(255, 215, 0, 0.4) inset, 0 0 25px rgba(255, 215, 0, 0.4); }
+
+/* ====== CHARACTERS ====== */
+.friends-row { display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin-bottom: 20px; height: 150px; position: relative; }
+.char-wrapper { display: flex; flex-direction: column; align-items: center; width: 48px; position: relative; }
+.char-wrapper::after {
+    content: ""; position: absolute; bottom: -6px; width: 34px; height: 6px;
+    background: radial-gradient(ellipse, var(--aura-color) 0%, transparent 70%);
+    opacity: 0.6; animation: sh-bob 3.5s infinite ease-in-out; will-change: transform;
+}
+
+.friend { position: relative; width: 44px; height: 95px; animation: bob 3.5s infinite ease-in-out; will-change: transform; }
+.friend.celebrate { animation: jump 0.45s infinite ease-out !important; }
+.is-celebrating::after { animation: sh-jump 0.45s infinite ease-out !important; }
+
+/* Asynchronous idle wave — each character bobs at its own phase.
+   Tied to shirt color (.c1..c6) so the wave reads as a personality, not noise. */
+.char-wrapper:nth-child(1) .friend,
+.char-wrapper:nth-child(1)::after { animation-delay: 0s; }
+.char-wrapper:nth-child(2) .friend,
+.char-wrapper:nth-child(2)::after { animation-delay: -0.55s; }
+.char-wrapper:nth-child(3) .friend,
+.char-wrapper:nth-child(3)::after { animation-delay: -1.10s; }
+.char-wrapper:nth-child(4) .friend,
+.char-wrapper:nth-child(4)::after { animation-delay: -1.65s; }
+.char-wrapper:nth-child(5) .friend,
+.char-wrapper:nth-child(5)::after { animation-delay: -2.20s; }
+.char-wrapper:nth-child(6) .friend,
+.char-wrapper:nth-child(6)::after { animation-delay: -2.75s; }
+
+/* Drama pause: characters freeze during scanning, then explode into celebrate.
+   Negative animation-delay keeps each one's phase, no snap-back to start. */
+body.is-scanning .friend,
+body.is-scanning .char-wrapper::after { animation-play-state: paused; }
+
+.crown { position: absolute; top: -12px; left: 10px; width: 24px; height: 12px; background: var(--yellow); clip-path: polygon(0% 100%, 0% 20%, 25% 60%, 50% 0%, 75% 60%, 100% 20%, 100% 100%); border: 1px solid #000; display: none; }
+.has-crown .crown { display: block; }
+.hair { position: absolute; top: 0; left: 4px; width: 36px; height: 15px; border: 3px solid #000; border-radius: 2px; }
+.face { position: absolute; top: 12px; left: 4px; width: 36px; height: 32px; border: 3px solid #000; }
+.eyes-container { position: absolute; top: 8px; left: 6px; width: 18px; height: 6px; display: flex; justify-content: space-between; }
+.pupil { width: 6px; height: 6px; background: #000; }
+.smile { position: absolute; bottom: 4px; left: 9px; width: 14px; height: 8px; border-bottom: 3px solid #000; border-radius: 0 0 10px 10px; }
+.bodyPart { position: absolute; top: 41px; left: 4px; width: 36px; height: 28px; border: 3px solid #000; border-radius: 2px; }
+.bodyPart::before { content: ""; position: absolute; top: 2px; left: -9px; width: 48px; height: 11px; background: inherit; border: 3px solid #000; border-radius: 3px; z-index: -1; }
+.legs { position: absolute; bottom: 4px; left: 8px; width: 28px; height: 22px; display: flex; justify-content: space-between; }
+.leg { width: 10px; height: 100%; border: 3px solid #000; position: relative; }
+.shoe { position: absolute; bottom: -4px; left: -4px; width: 18px; height: 8px; border: 3px solid #000; border-radius: 2px; background: #fff; }
+
+.c1 .hair { background: #ffd84d; } .c1 .face { background: #f6d7b8; } .c1 .bodyPart, .c1 .leg { background: #3a7cff; } .c1 .shoe { background: #ffcc00; }
+.c2 .hair { background: #5a3a2a; } .c2 .face { background: #5a3a28; } .c2 .bodyPart, .c2 .leg { background: #ffcc00; } .c2 .shoe { background: #ff5c7c; }
+.c3 .hair { background: #7a4530; } .c3 .face { background: #f0c8a0; } .c3 .bodyPart, .c3 .leg { background: #ff5c7c; } .c3 .shoe { background: #44d17a; }
+.c4 .hair { background: #8a4a28; } .c4 .face { background: #c98a5b; } .c4 .bodyPart, .c4 .leg { background: #44d17a; } .c4 .shoe { background: #a96cff; }
+.c5 .hair { background: #6a3820; } .c5 .face { background: #8a5a38; } .c5 .bodyPart, .c5 .leg { background: #a96cff; } .c5 .shoe { background: #00d9ff; }
+.c6 .hair { background: #a06c44; } .c6 .face { background: #efd1b2; } .c6 .bodyPart, .c6 .leg { background: #00d9ff; } .c6 .shoe { background: #3a7cff; }
+
+.satoshi-gold .hair, .satoshi-gold .face, .satoshi-gold .bodyPart, .satoshi-gold .leg, .satoshi-gold .shoe { background: var(--gold) !important; border-color: #554000 !important; }
+
+/* ====== UI ====== */
+.title h1 { margin: 0; font-size: 46px; text-align: center; color: var(--yellow); text-shadow: 3px 3px 0 #800000; line-height: 0.9; letter-spacing: 1px; }
+.title h1 span { color: var(--blue); }
+.subtitle { text-align: center; font-size: 11px; color: #555; letter-spacing: 3px; margin: 8px 0; }
+input { width: 100%; height: 70px; background: #050505; border: 3px solid var(--blue); border-radius: 14px; color: #fff; text-align: center; font-size: 30px; font-family: var(--font-arcade); outline: none; letter-spacing: 2px; }
+input:focus-visible { border-color: var(--yellow); }
+.scan-button { margin-top: 15px; width: 100%; height: 70px; background: var(--red); border: none; border-bottom: 6px solid #7a0000; border-radius: 14px; color: #fff; font-size: 28px; font-family: var(--font-arcade); cursor: pointer; letter-spacing: 2px; transition: transform 0.1s; }
+.scan-button:active:not(:disabled) { transform: translateY(2px); border-bottom-width: 4px; }
+.scan-button:disabled { opacity: 0.5; filter: grayscale(1); cursor: not-allowed; }
+
+/* ====== DISPLAY PANEL ====== */
+.display-panel {
+    flex-grow: 1; margin-top: 15px; border: 3px dashed #222; border-radius: 18px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 15px;
+    transition: border-color 0.3s, background 0.3s;
+    overflow: hidden;
+}
+
+.status-emoji {
+    font-size: 64px;
+    line-height: 1;
+    margin-bottom: 14px;
+    display: none;
+    filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.25));
+}
+
+.status-text {
+    font-size: 28px;
+    color: var(--yellow);
+    letter-spacing: 1px;
+    line-height: 1.05;
+    transition: font-size 0.3s;
+}
+
+/* RESULT (any tier) → show emoji + big text + solid border */
+body.is-result .status-emoji {
+    display: block;
+    animation: emoji-pop 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.55);
+}
+body.is-result .status-text { font-size: 42px; }
+body.is-result .display-panel { border-style: solid; border-width: 3px; }
+
+/* Result hint — small line under verdict, only after result */
+.result-hint {
+    font-size: 11px;
+    color: #555;
+    letter-spacing: 3px;
+    margin-top: 14px;
+    text-align: center;
+    display: none;
+}
+body.is-result .result-hint { display: block; }
+
+/* TIER COLORS */
+body.is-npc .status-text { color: var(--yellow); }
+body.is-npc .display-panel { border-color: var(--yellow); }
+
+body.is-glitched .status-text {
+    color: #ffffff;
+    animation: glitch-text 0.18s infinite steps(1, end);
+}
+body.is-glitched .display-panel { border-color: #ff0044; }
+
+body.is-godlike .status-text {
+    background: linear-gradient(90deg, #ff0080, #ff8c00, #ffd700, #00ff95, #00d9ff, #a96cff, #ff0080);
+    background-size: 200% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+    animation: rainbow-shift 2.5s linear infinite;
+    text-shadow: none;
+}
+body.is-godlike .display-panel { border-color: #ffd700; }
+
+body.is-epic .status-text {
+    color: #ffd700;
+    text-shadow: 0 0 10px #ff9500, 0 0 25px #ff9500, 0 0 40px #ff5500;
+}
+body.is-epic .display-panel { border-color: #ffd700; background: rgba(255, 215, 0, 0.04); }
+
+/* ====== ACTION BUTTONS ====== */
+.result-actions { display: none; gap: 10px; margin: 15px 0 0; }
+body.is-result .result-actions { display: flex; }
+.action-btn { flex: 1; height: 60px; border: none; border-radius: 12px; font-size: 22px; font-family: var(--font-arcade); cursor: pointer; letter-spacing: 1px; transition: transform 0.1s; }
+.action-btn:active { transform: translateY(2px); }
+.share-btn { background: var(--green); color: #000; border-bottom: 5px solid #00a060; }
+.again-btn { background: var(--yellow); color: #000; border-bottom: 5px solid #a08800; }
+
+.watermark { position: absolute; bottom: 6px; left: 0; right: 0; text-align: center; font-size: 11px; color: #555; letter-spacing: 4px; pointer-events: none; z-index: 5; }
+.counter { position: absolute; top: 10px; right: 14px; font-size: 11px; color: #444; letter-spacing: 2px; z-index: 5; }
+
+/* ====== ANIMATIONS ====== */
+@keyframes pulse-border { 0%, 100% { border-color: var(--yellow); } 50% { border-color: var(--blue); } }
+@keyframes pulse-glitch { 0%, 100% { border-color: #ff0044; } 50% { border-color: #00ffff; } }
+@keyframes rainbow-border {
+    0%   { border-color: #ff0080; }
+    16%  { border-color: #ff8c00; }
+    33%  { border-color: #ffd700; }
+    50%  { border-color: #00ff95; }
+    66%  { border-color: #00d9ff; }
+    83%  { border-color: #a96cff; }
+    100% { border-color: #ff0080; }
+}
+@keyframes app-shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+@keyframes bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes jump { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-28px); } }
+@keyframes sh-bob { 0%, 100% { transform: scale(1.1); opacity: 0.6; } 50% { transform: scale(0.8); opacity: 0.3; } }
+@keyframes sh-jump { 0%, 100% { transform: scale(1.2); opacity: 0.6; } 50% { transform: scale(0.4); opacity: 0.1; } }
+
+@keyframes emoji-pop {
+    0%   { transform: scale(0) rotate(-180deg); opacity: 0; }
+    60%  { transform: scale(1.25) rotate(10deg); opacity: 1; }
+    100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+@keyframes rainbow-shift {
+    0%   { background-position: 0% 50%; }
+    100% { background-position: 200% 50%; }
+}
+
+@keyframes glitch-text {
+    0%   { text-shadow: 2px 0 #ff0044, -2px 0 #00ffff; transform: translate(0); }
+    25%  { text-shadow: -2px 0 #ff0044, 2px 0 #00ffff; transform: translate(1px, -1px); }
+    50%  { text-shadow: 3px 0 #ff0044, -3px 0 #00ffff; transform: translate(-1px, 1px); }
+    75%  { text-shadow: 1px 0 #ff0044, -1px 0 #00ffff; transform: translate(1px, 0); }
+    100% { text-shadow: -3px 0 #ff0044, 3px 0 #00ffff; transform: translate(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+    .friend, .char-wrapper::after { animation: none !important; }
+}
+</style>
+</head>
+<body class="is-idle">
+<div class="app-container">
+    <div class="crt-lines"></div><div class="vignette"></div>
+    <div class="app" id="mainApp">
+        <div class="counter" id="counter"></div>
+        <div class="friends-row" id="friendsRow"></div>
+        <div class="title"><h1>SOUL<br><span>ARCADE</span></h1><div class="subtitle">LETTERS IN · VIBE OUT</div></div>
+        <div class="input-container">
+            <input id="phoneInput" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" maxlength="20" placeholder="TYPE A NAME" aria-label="A name">
+        </div>
+        <button id="triggerBtn" class="scan-button" disabled>SCAN VIBE</button>
+        <div class="display-panel" role="status" aria-live="polite">
+            <div class="status-emoji" id="statusEmoji"></div>
+            <div class="status-text" id="statusText">WHAT'S YOUR VIBE?</div>
+            <div class="result-hint" id="resultHint"></div>
+        </div>
+        <div class="result-actions">
+            <button id="sendBtn" class="action-btn share-btn">SHARE</button>
+            <button id="againBtn" class="action-btn again-btn">ONE MORE</button>
+        </div>
+        <div class="watermark">PURE MATH · NO MYSTICISM</div>
+    </div>
+</div>
+
+<template id="friendTpl">
+    <div class="char-wrapper">
+        <div class="friend">
+            <div class="crown"></div>
+            <div class="hair"></div>
+            <div class="face">
+                <div class="eyes-container"><div class="pupil"></div><div class="pupil"></div></div>
+                <div class="smile"></div>
+            </div>
+            <div class="bodyPart"></div>
+            <div class="legs">
+                <div class="leg"><div class="shoe"></div></div>
+                <div class="leg"><div class="shoe"></div></div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<script>
+'use strict';
+
+// ====== POLYFILL: replaceChildren for older WebViews (Android 7-8 без свежего Chrome) ======
+if (!Element.prototype.replaceChildren) {
+    Element.prototype.replaceChildren = function(...nodes) {
+        while (this.lastChild) this.removeChild(this.lastChild);
+        if (nodes.length) this.append(...nodes);
+    };
+}
+
+// ====== CONFIG ======
+const CFG = {
+    CHAR_LIMIT: 6,
+    SCAN_TICK_MS: 130,
+    SCAN_TICKS: 22,
+    CELEBRATE_STAGGER_MS: 60,
+    EPIC_CHANCE_PER_1000: 5,     // 0.5%
+    GODLIKE_THRESHOLD: 5,        // luck < 5  → godlike (5%)
+    GLITCHED_THRESHOLD: 30,      // luck < 30 → glitched (25%)
+    CROWN_CHANCE_PER_100: 15,
+    SHARE_URL: 'https://friendscanner.fun', // ← put your real domain here
+};
+
+const STATE = { IDLE: 'is-idle', SCANNING: 'is-scanning', RESULT: 'is-result' };
+const TIER  = { NPC: 'is-npc', GLITCHED: 'is-glitched', GODLIKE: 'is-godlike', EPIC: 'is-epic' };
+const ALL_BODY_CLASSES = ['is-idle', 'is-scanning', 'is-result', 'is-npc', 'is-glitched', 'is-godlike', 'is-epic'];
+
+// Per-tier SHARE button labels (psych: context-specific CTA)
+const SHARE_LABELS = {
+    'is-npc':      'EXPOSE THIS',
+    'is-glitched': 'ROAST THEM',
+    'is-godlike':  'FLEX THIS',
+    'is-epic':     'SHOW EVERYONE'
+};
+
+// ====== LIBRARY: 54 observational verdicts ======
+// Style: concrete actions, not labels. Verbs over adjectives.
+// No slang that ages. No attacks on identity. Behavior only.
+const library = {
+    epic: [
+        { text: 'THE 0.001%',                  emoji: '👑' },
+        { text: 'OUTSIDE THE SIMULATION',      emoji: '🌌' },
+        { text: 'BORN ON A LEAP SECOND',       emoji: '⚡' },
+        { text: 'UNAUTHORIZED MAIN CHARACTER', emoji: '🔓' },
+        { text: 'AURA EXCEEDS LIMITS',         emoji: '💫' }
+    ],
+    godlike: [
+        { text: 'MAKES STRANGERS SMILE',       emoji: '🌟' },
+        { text: 'EVERY STORY STARTS WITH THEM',emoji: '🎬' },
+        { text: 'KEEPS EVERYONE\'S SECRETS',   emoji: '🔑' },
+        { text: 'ANSWERS AT 4 AM',             emoji: '🛟' },
+        { text: 'ROOM GETS BRIGHTER',          emoji: '🌞' },
+        { text: 'TURNS BAD DAYS GOOD',         emoji: '🪄' },
+        { text: 'NEVER ASKS, ALWAYS HAS',      emoji: '🍀' },
+        { text: 'ON SPEED DIAL FOR EMERGENCIES', emoji: '📞' },
+        { text: 'FEELS LIKE COMING HOME',      emoji: '🏠' },
+        { text: 'REMEMBERS YOUR COFFEE ORDER', emoji: '🎁' },
+        { text: 'CALM IN ANY STORM',           emoji: '🌊' },
+        { text: 'LIGHTS UP THE GROUP CHAT',    emoji: '🕯️' }
+    ],
+    glitched: [
+        { text: 'ARGUES WITH GHOSTS AT 3 AM',  emoji: '🌙' },
+        { text: 'TEXTS PARAGRAPHS, EXPECTS "K"', emoji: '💌' },
+        { text: 'LIES IN MULTIPLE DIALECTS',   emoji: '🎭' },
+        { text: 'PREDICTS DRAMA BEFORE IT HAPPENS', emoji: '🔮' },
+        { text: 'LEAVES WITHOUT SAYING BYE',   emoji: '🚪' },
+        { text: 'MAKES DECISIONS BY VIBE ALONE', emoji: '🎲' },
+        { text: 'CALLS TO ASK IF YOU TEXTED',  emoji: '📞' },
+        { text: 'EXISTS ON ANOTHER FREQUENCY', emoji: '🛸' },
+        { text: 'DEFUSES BOMBS BY ADDING BOMBS', emoji: '🧨' },
+        { text: 'ARGUES WITH STREET SIGNS',    emoji: '📚' },
+        { text: 'MAKES PLANS, MOVES THE PLANS',emoji: '📅' },
+        { text: 'TWO MOODS PER MINUTE',        emoji: '🎢' },
+        { text: 'STARTS FIGHTS, JOINS LATER',  emoji: '🌶️' },
+        { text: 'SINGS DURING SERIOUS MOMENTS',emoji: '🎤' }
+    ],
+    npc: [
+        { text: 'STILL IN BED FROM YESTERDAY', emoji: '🛏️' },
+        { text: 'THREE BITES, FULL ALREADY',   emoji: '🍕' },
+        { text: 'CHARGES PHONE WITH 2% LEFT',  emoji: '🔋' },
+        { text: 'OPENS FRIDGE LOOKING AT PHONE', emoji: '📱' },
+        { text: 'NEEDS COFFEE TO MAKE COFFEE', emoji: '☕' },
+        { text: 'NAPS WITH ONE SHOE ON',       emoji: '😴' },
+        { text: 'SCROLLS DURING SHOWER',       emoji: '🚿' },
+        { text: 'TYPES "..." THEN VANISHES',   emoji: '📭' },
+        { text: 'ORDERS EXTRA, EATS HALF',     emoji: '🍔' },
+        { text: 'OPENS FRIDGE, FINDS NOTHING, REPEATS', emoji: '🧊' },
+        { text: 'CAN\'T HEAR YOU, AIRPODS IN', emoji: '🎧' },
+        { text: 'WATCHES TV, BACKGROUND ONLY', emoji: '📺' },
+        { text: 'BROKE BY THE 5TH',            emoji: '💸' },
+        { text: 'YAWNS AT NOON',               emoji: '🥱' },
+        { text: 'ARRIVES AS PARTY ENDS',       emoji: '🐢' },
+        { text: 'KNOWS EVERYONE\'S DRAMA, SHARES NONE', emoji: '🍿' },
+        { text: 'CHECKS WEATHER, GOES OUT WET',emoji: '🌧️' },
+        { text: 'EATS PICKLES WITH ICE CREAM', emoji: '🥒' },
+        { text: 'SAVES SCREENSHOTS, NEVER LOOKS BACK', emoji: '💾' },
+        { text: 'MOVES FURNITURE AT 2 AM',     emoji: '🪑' },
+        { text: 'ADDS TO CART, NEVER BUYS',    emoji: '🛍️' },
+        { text: 'SHAKES ICE FOR ONE MORE SIP', emoji: '🥤' },
+        { text: 'BRUSHES TEETH, SHOWERS NEXT WEEK', emoji: '🪥' }
+    ]
+};
+
+// ====== DOM ======
+const phoneInput = document.getElementById('phoneInput');
+const triggerBtn = document.getElementById('triggerBtn');
+const statusText = document.getElementById('statusText');
+const statusEmoji = document.getElementById('statusEmoji');
+const resultHint = document.getElementById('resultHint');
+const shareBtn = document.getElementById('sendBtn');
+const againBtn = document.getElementById('againBtn');
+const friendsRow = document.getElementById('friendsRow');
+const mainApp = document.getElementById('mainApp');
+const counterEl = document.getElementById('counter');
+const body = document.body;
+const friendTpl = document.getElementById('friendTpl');
+
+// ====== STATE & HANDLES ======
+let friendEls = [], wrapperEls = [];
+let scanInterval = null;
+let celebrateTimeouts = [];
+let isSharing = false;
+let currentResult = null; // { text, emoji, tier }
+
+// ====== INIT CHARACTERS via <template> ======
+function initCharacters() {
+    const frag = document.createDocumentFragment();
+    for (let i = 1; i <= CFG.CHAR_LIMIT; i++) {
+        const node = friendTpl.content.cloneNode(true);
+        node.querySelector('.friend').classList.add(`c${i}`);
+        frag.appendChild(node);
+    }
+    friendsRow.replaceChildren(frag);
+    friendEls = friendsRow.querySelectorAll('.friend');
+    wrapperEls = friendsRow.querySelectorAll('.char-wrapper');
+}
+
+// ====== STATE / VISUAL HELPERS ======
+function setAppState(state, tier) {
+    ALL_BODY_CLASSES.forEach(c => body.classList.remove(c));
+    body.classList.add(state);
+    if (tier) body.classList.add(tier);
+    if (state === STATE.RESULT) {
+        mainApp.classList.add('shake');
+        setTimeout(() => mainApp.classList.remove('shake'), 400);
+    }
+}
+
+function setStatus(text, emoji = '') {
+    statusText.textContent = text;
+    statusEmoji.textContent = emoji;
+}
+
+function clearCelebrateTimeouts() {
+    celebrateTimeouts.forEach(t => clearTimeout(t));
+    celebrateTimeouts = [];
+}
+
+function resetVisuals() {
+    clearCelebrateTimeouts();
+    setAppState(STATE.IDLE);
+    friendsRow.classList.remove('satoshi-gold');
+    friendEls.forEach(f => f.classList.remove('celebrate', 'has-crown'));
+    wrapperEls.forEach(w => w.classList.remove('is-celebrating'));
+    currentResult = null;
+}
+
+// ====== HAPTICS ======
+const triggerHaptic = (pattern) => { if (navigator.vibrate) navigator.vibrate(pattern); };
+
+// ====== HASH ======
+// djb2 accumulator + Murmur3-style avalanche finalizer.
+// The finalizer is critical: without it, short alphabetic inputs cluster
+// into one tier (because raw djb2 leaves high bits empty for short A-Z input)
+// AND symmetric inputs like "AB"/"BA" collide. Avalanche fixes both.
+function generateHash(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+    }
+    // Murmur3 fmix32 — proven bit-diffusion. Tiny cost, huge entropy gain.
+    hash ^= hash >>> 16;
+    hash = Math.imul(hash, 0x85ebca6b);
+    hash ^= hash >>> 13;
+    hash = Math.imul(hash, 0xc2b2ae35);
+    hash ^= hash >>> 16;
+    return (hash >>> 0); // force unsigned 32-bit
+}
+
+// ====== AUDIO (Web Audio API — no files, generated 8-bit) ======
+let audioCtx = null;
+let audioReady = false;
+function ensureAudio() {
+    if (audioReady) return;
+    try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        audioReady = true;
+    } catch (e) { /* old browser — silent fallback */ }
+}
+function beep(freq, dur = 0.08, vol = 0.06, type = 'square') {
+    if (!audioCtx) return;
+    try {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type = type;
+        o.frequency.value = freq;
+        g.gain.setValueAtTime(vol, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+        o.connect(g).connect(audioCtx.destination);
+        o.start();
+        o.stop(audioCtx.currentTime + dur);
+    } catch (e) { /* suspended state */ }
+}
+function playArpeggio(notes, gap = 80, dur = 0.2, vol = 0.1) {
+    notes.forEach((f, i) => setTimeout(() => beep(f, dur, vol), i * gap));
+}
+
+// ====== INPUT SANITIZATION ======
+// Accept English letters only. Force uppercase. Hard cap 20 chars.
+const MIN_NAME_LEN = 2;
+const MAX_NAME_LEN = 20;
+function sanitizeName(str) {
+    return (str || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, MAX_NAME_LEN);
+}
+
+phoneInput.addEventListener('input', (e) => {
+    if (body.classList.contains(STATE.SCANNING)) return;
+    if (!body.classList.contains(STATE.IDLE)) resetVisuals();
+    const clean = sanitizeName(e.target.value);
+    if (e.target.value !== clean) e.target.value = clean;
+    triggerBtn.disabled = clean.length < MIN_NAME_LEN;
+    if (clean.length < MIN_NAME_LEN) {
+        setStatus('WHAT\'S YOUR VIBE?');
+        resultHint.textContent = '';
+    }
+});
+
+phoneInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !triggerBtn.disabled) {
+        e.preventDefault();
+        triggerBtn.click();
+    }
+});
+
+// ====== CORE: pick result + scan ======
+// Pure deterministic math — every input has identical odds.
+// No backdoors, no special numbers, no hidden patterns.
+function pickFromSeed(seed) {
+    const epicRoll = seed % 1000;
+    const luck = (seed >>> 10) % 100;
+    const variantIdx = seed >>> 17;
+
+    const isEpic = epicRoll < CFG.EPIC_CHANCE_PER_1000;
+
+    let pool, tier;
+    if (isEpic)                              { pool = library.epic;     tier = TIER.EPIC; }
+    else if (luck < CFG.GODLIKE_THRESHOLD)   { pool = library.godlike;  tier = TIER.GODLIKE; }
+    else if (luck < CFG.GLITCHED_THRESHOLD)  { pool = library.glitched; tier = TIER.GLITCHED; }
+    else                                      { pool = library.npc;     tier = TIER.NPC; }
+
+    const idx = variantIdx % pool.length;
+    const v = pool[idx];
+    return { text: v.text, emoji: v.emoji, tier, seed };
+}
+
+function pickResult(raw) {
+    return pickFromSeed(generateHash(raw));
+}
+
+function startScan(presetResult) {
+    ensureAudio();
+    triggerHaptic(70);
+
+    // If presetResult provided (viral-loop link with ?h=hash), use it.
+    // Otherwise compute from current input (sanitized letters only).
+    let result;
+    if (presetResult) {
+        result = presetResult;
+    } else {
+        const name = sanitizeName(phoneInput.value);
+        result = pickResult(name);
+    }
+
+    setAppState(STATE.SCANNING);
+    triggerBtn.disabled = true;
+    phoneInput.disabled = true;
+
+    if (scanInterval) clearInterval(scanInterval);
+    let ticks = 0;
+    scanInterval = setInterval(() => {
+        const labels = ['SCANNING', 'ANALYZING', 'SYNCING'];
+        setStatus(labels[ticks % 3] + '.'.repeat((ticks % 3) + 1));
+        if (ticks % 2 === 0) { triggerHaptic(15); beep(700 + (ticks * 30) % 300, 0.04, 0.04); }
+        ticks++;
+        if (ticks > CFG.SCAN_TICKS) {
+            clearInterval(scanInterval);
+            scanInterval = null;
+            displayResult(result);
+        }
+    }, CFG.SCAN_TICK_MS);
+}
+
+triggerBtn.addEventListener('click', () => startScan());
+
+function displayResult(result) {
+    currentResult = result;
+    setStatus(result.text, result.emoji);
+    setAppState(STATE.RESULT, result.tier);
+
+    // tier-specific haptic + sound
+    if (result.tier === TIER.EPIC) {
+        triggerHaptic([150, 50, 150, 50, 300]);
+        playArpeggio([523, 659, 784, 1047, 1319, 1568], 90, 0.28, 0.12);
+        friendsRow.classList.add('satoshi-gold');
+    } else if (result.tier === TIER.GODLIKE) {
+        triggerHaptic([100, 30, 100, 30, 200]);
+        playArpeggio([659, 784, 988, 1175], 70, 0.22, 0.1);
+    } else if (result.tier === TIER.GLITCHED) {
+        triggerHaptic([40, 20, 40, 20, 40]);
+        playArpeggio([523, 466, 587, 440], 60, 0.15, 0.09); // dissonant
+    } else {
+        triggerHaptic([100, 50, 100]);
+        playArpeggio([523, 659, 784], 80, 0.18, 0.1);
+    }
+
+    // crown chance
+    if ((result.seed % 100) < CFG.CROWN_CHANCE_PER_100) {
+        friendEls[result.seed % CFG.CHAR_LIMIT].classList.add('has-crown');
+    }
+
+    // celebrate stagger — tracked so we can cancel on reset
+    clearCelebrateTimeouts();
+    wrapperEls.forEach((w, i) => {
+        const t = setTimeout(() => {
+            w.querySelector('.friend').classList.add('celebrate');
+            w.classList.add('is-celebrating');
+        }, i * CFG.CELEBRATE_STAGGER_MS);
+        celebrateTimeouts.push(t);
+    });
+
+    phoneInput.disabled = false;
+    bumpCounter();
+
+    // Track unique verdicts seen + update Zeigarnik hint
+    bumpSeen(result.text);
+    const remaining = Math.max(0, TOTAL_VERDICTS - unlockedCount());
+    if (remaining > 0) {
+        resultHint.textContent = `${remaining} MORE VIBES TO UNLOCK · HASH-BASED`;
+    } else {
+        resultHint.textContent = `ALL ${TOTAL_VERDICTS} UNLOCKED · PURE MATH`;
+    }
+
+    // Context-specific SHARE label per tier
+    shareBtn.textContent = SHARE_LABELS[result.tier] || 'SHARE';
+}
+
+// ====== AGAIN (psych: "ONE MORE" framing for continuation) ======
+againBtn.addEventListener('click', () => {
+    triggerHaptic(30);
+    phoneInput.value = '';
+    phoneInput.disabled = false;
+    triggerBtn.disabled = true;
+    resetVisuals();
+    setStatus('WHAT\'S YOUR VIBE?');
+    resultHint.textContent = '';
+    shareBtn.textContent = 'SHARE'; // reset to default for next round
+    phoneInput.focus();
+});
+
+// ====== SHARE (viral loop: phone preset in URL) ======
+async function copyToClipboard(text) {
+    if (navigator.clipboard?.writeText) {
+        try { await navigator.clipboard.writeText(text); return true; } catch (e) {}
+    }
+    try {
+        const ta = document.createElement('textarea');
+        ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.focus(); ta.select();
+        const ok = document.execCommand('copy');
+        document.body.removeChild(ta);
+        return ok;
+    } catch (e) { return false; }
+}
+
+shareBtn.addEventListener('click', async () => {
+    if (isSharing || !currentResult) return;
+    isSharing = true;
+    triggerHaptic(50);
+
+    try {
+        // Privacy: share the HASH, not the raw phone number.
+        // Hash is one-way — friends opening the link get the same
+        // verdict, but the original digits are never published.
+        const url = `${CFG.SHARE_URL}/?h=${currentResult.seed}`;
+        const text = `${currentResult.emoji} ${currentResult.text}\n(pure math · 1 in ${TOTAL_VERDICTS})\nGet yours:`;
+
+        if (navigator.share) {
+            try {
+                await navigator.share({ title: 'Soul Arcade', text, url });
+            } catch (err) {
+                if (err.name !== 'AbortError') console.warn('Share failed:', err);
+            }
+        } else {
+            const ok = await copyToClipboard(`${text}\n${url}`);
+            if (ok) {
+                const original = shareBtn.textContent;
+                shareBtn.textContent = 'COPIED!';
+                setTimeout(() => shareBtn.textContent = original, 2000);
+            }
+        }
+    } finally {
+        isSharing = false;
+    }
+});
+
+// ====== COUNTER (local, no tracking) ======
+function readCounter() {
+    try { return parseInt(localStorage.getItem('fs_scans') || '0', 10) || 0; } catch (e) { return 0; }
+}
+function bumpCounter() {
+    try {
+        const n = readCounter() + 1;
+        localStorage.setItem('fs_scans', String(n));
+        renderCounter();
+    } catch (e) {}
+}
+function renderCounter() {
+    const n = readCounter();
+    counterEl.textContent = n > 0 ? `${n} SCAN${n === 1 ? '' : 'S'}` : '';
+}
+
+// ====== SEEN-VERDICTS TRACKING (local, no upload) ======
+// Total in library — auto-computed, no manual sync needed.
+const TOTAL_VERDICTS =
+    library.epic.length + library.godlike.length +
+    library.glitched.length + library.npc.length;
+
+function readSeen() {
+    try {
+        const raw = localStorage.getItem('fs_seen');
+        return raw ? new Set(JSON.parse(raw)) : new Set();
+    } catch (e) { return new Set(); }
+}
+function bumpSeen(text) {
+    try {
+        const set = readSeen();
+        set.add(text);
+        localStorage.setItem('fs_seen', JSON.stringify([...set]));
+    } catch (e) {}
+}
+function unlockedCount() {
+    return readSeen().size;
+}
+
+// ====== AUTO-SCAN from URL ?h=<hash> (viral loop, privacy-safe) ======
+// The hash is one-way — opening the link reproduces the same verdict
+// the sender saw, but the original phone digits are never published.
+function tryAutoScan() {
+    const params = new URLSearchParams(location.search);
+    const h = params.get('h');
+    if (h && /^\d+$/.test(h)) {
+        const seed = parseInt(h, 10);
+        if (Number.isFinite(seed) && seed >= 0) {
+            const presetResult = pickFromSeed(seed);
+            // Visually mark the input as "shared scan" without showing any number
+            phoneInput.value = 'SHARED SCAN';
+            phoneInput.disabled = true;
+            triggerBtn.disabled = true;
+            setTimeout(() => {
+                ensureAudio();
+                startScan(presetResult);
+            }, 700);
+        }
+    }
+}
+
+// ====== LIFECYCLE: kill interval when backgrounded ======
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden && scanInterval) {
+        clearInterval(scanInterval);
+        scanInterval = null;
+        clearCelebrateTimeouts();
+        resetVisuals();
+        setStatus('WHAT\'S YOUR VIBE?');
+        resultHint.textContent = '';
+        shareBtn.textContent = 'SHARE';
+        phoneInput.disabled = false;
+        triggerBtn.disabled = sanitizeName(phoneInput.value).length < MIN_NAME_LEN;
+    }
+});
+
+// ====== BOOT ======
+initCharacters();
+renderCounter();
+tryAutoScan();
+</script>
+</body>
+</html>
