@@ -1,0 +1,33 @@
+{
+  "name": "Soul Arcade",
+  "short_name": "Soul Arcade",
+  "description": "Arcade name vibe reader. Type a name, get a vibe. Pure math, no mysticism.",
+  "start_url": "/soul-arcade/",
+  "scope": "/soul-arcade/",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "categories": ["entertainment", "games"],
+  "lang": "en",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
